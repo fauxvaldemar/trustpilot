@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html ng-app="trustApp">
+<head>
+    <meta charset="UTF-8">
+    <title>Widget for Trustpilot application, Valdemar Schultz Andreasen dec 2015</title>
+    <script src="bower_components/angular/angular.min.js"></script>
+    <script src="bower_components/jquery/jquery.min.js"></script>
+    <script type="text/javascript" src="//cdnjs.cloudflare.com/ajax/libs/angular-ui-bootstrap/0.10.0/ui-bootstrap-tpls.min.js"></script>
+    <link rel="stylesheet" href="bower_components/bootstrap/dist/css/bootstrap.min.css"></link>
+    
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/font-awesome/4.5.0/css/font-awesome.min.css">
+    <link rel="stylesheet" href="/trust/css/style2.css">
+    </head>
+<body>
+    <div ng-controller="reviewsCtrl" >
+        
+        <div class="wrap"> 
+            
+            <div id="top">
+                <img src="trustpilot_d.png" alt="TrustPilot" >
+                <div ng-hide="!hide" ng-click="switchClass()" id="overskrift"  ng-repeat="x in reviews">
+                    <stars  ng-if="$first" id="stay" rate="avgStar"  ></stars>
+                    <div  ng-if="$first">
+                        out of {{reviews.length}} reviews <br> <br >CLICK TO READ REVIEWS 
+                    </div>
+                
+            </div>
+            <div ng-hide="hide" >
+                <carousel interval="myInterval">
+                    <slide id="slide " ng-repeat="slide in reviews" active="slide.active">
+                        <div overskrift  >
+                            <h4 id="title">{{slide.reviewTitle}}</h4>
+                            <stars rate="slide.starRating"  ></stars>
+                                <div hideClass ng-hide="!hide2">
+                                    <a  ng-click="hideClass()">READ FULL REVIEW</a>
+                                </div>
+                        </div>
+                        <div ng-hide="hide2" class="review-content" ng-model="testV" >
+                             <div id="text">"{{ slide.reviewBody }}"</div>
+                            <div id="author"> 
+                                <h5> - {{ slide.firstName }}  <p ng-if="slide.location">{{ slide.location }}</p></h5>
+                            </div>
+                             <div id="less" >
+                                <a class="title" ng-click="hideClass()">SHOW LESS</a>
+                             </div>
+                        </div>
+                    </slide>
+                </carousel>
+            </div>
+            
+            <div ng-click="switchClass()">
+                <a href=""><div>  
+                <i id="arrow" class="fa fa-chevron-down fa-3x" ></i></div>  </a>
+
+            </div>
+            
+        
+        </div>
+        
+    </div>
+    
+</div>
+    <script>
+        var app = angular.module('trustApp',['ui.bootstrap']);
+        app.controller('reviewsCtrl', function($scope, $http, $compile) {
+            $scope.myInterval = 9999999;
+            $scope.hide = true;
+            $scope.hide2 = true;
+            $scope.switchClass = function(){
+
+                $scope.hide = $scope.hide === false ? true: false;
+                var element = document.querySelector('#arrow');
+                var angElement = angular.element(element);
+                if(angElement.hasClass('fa-chevron-down')){
+                    angElement.removeClass('fa-chevron-down');
+                    angElement.addClass('fa-chevron-up');
+                }
+                else
+                    {angElement.addClass('fa-chevron-down');}
+            }
+            $scope.hideClass = function(){
+                 $scope.hide2 = $scope.hide2 === false ? true: false;
+                var element = document.querySelector('.wrap');
+                var angElement = angular.element(element);
+                if(angElement.hasClass('bigger')){
+                    angElement.removeClass('bigger');
+                }
+                else
+                    {angElement.addClass('bigger');}                
+            }
+            $http.get("reviews.json")
+            .then(function(response) {
+                $scope.reviews = response.data.reviews;
+                var stars = 0;
+                angular.forEach($scope.reviews, function(value, key){
+                    stars += parseInt(value.starRating);
+                });
+                tmp = stars/$scope.reviews.length;
+                $scope.avgStar = tmp;
+            });      
+        }); 
+        app.directive("stars", function($compile){
+            return{
+                restrict: 'E',
+                scope: {
+                    rate: '=' 
+                },
+                
+                link: function(scope, element){
+                    var rest = 5 - scope.rate;
+                    var star = '<i class="fa fa-star fa-3x"></i>';
+                    var nostar = '<i class="fa fa-star-o fa-3x"></i>';
+                    var template = "";
+                    for(i=0;i<scope.rate;i++){
+                        template+=star;
+                    }
+                    for(i=0;i<rest;i++){
+                        template+=nostar;
+                    }
+                    var linkFn = $compile(template);
+                    var content = linkFn(scope);
+                    element.append(content);
+                }
+            }
+        });
+
+    </script>
+    
+</body>
+</html>
